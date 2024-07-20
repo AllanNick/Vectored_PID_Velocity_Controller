@@ -66,6 +66,7 @@ void error_update(PIDVexHandleTypedef *TargPIDController){
         TargPIDController->pointer = 0;
     }else{
         TargPIDController->pointer ++;
+        ;
     }
     //calculate velocities then transmit to PID Controller history
     Wheels_Velocities.velocies_of_deltas[Data_Index] = 
