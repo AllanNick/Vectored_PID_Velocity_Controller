@@ -1,0 +1,8 @@
+[
+{
+  "directory": "D:/Programs/C_works/Vectored_PID_Velocity_Controler/Vectored_PID_Velocity_Controller/build",
+  "command": "D:\\Software\\mingw64\\bin\\gcc.exe -g -o CMakeFiles\\a.dir\\Src\\main.c.obj -c D:\\Programs\\C_works\\Vectored_PID_Velocity_Controler\\Vectored_PID_Velocity_Controller\\Src\\main.c",
+  "file": "D:\\Programs\\C_works\\Vectored_PID_Velocity_Controler\\Vectored_PID_Velocity_Controller\\Src\\main.c",
+  "output": "CMakeFiles\\a.dir\\Src\\main.c.obj"
+}
+]
