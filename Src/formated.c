@@ -1,7 +1,6 @@
 #include "stdint.h"
 #include "stdlib.h"
 
-
 #define GblIttLength 20 //Global Interger Length
 #define PI 3.1415926535
 #define SysDt 20;
@@ -52,7 +51,6 @@ void DCI_Targ_Modify_Offset(DCIHandleTypedef *DCIC, int16_t Targ_V, int16_t Targ
 void DCI_Update_Calc(DCIHandleTypedef *DCIC);
 void error_update(PIDVexHandleTypedef *TargPIDController);
 float error_calc(PIDVexHandleTypedef *PIDController);
-
 
 void PID_CON_Init(PIDVexHandleTypedef *PIDController, uint16_t Access_Tag_ID){
     PIDController->parameters[0] = Default_KP;

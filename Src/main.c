@@ -69,7 +69,7 @@ void Delta_velocties(void);
 
 void error_update(PIDVexHandleTypedef *TargPIDController){
     uint16_t Data_Index = TargPIDController->Access_tag_ID;
-    if(TargPIDController->pointer == GblIttLength){
+    if(TargPIDController->pointer == GblIttLength-1){
         TargPIDController->pointer = 0;
     }else{
         TargPIDController->pointer ++;
@@ -101,6 +101,7 @@ float error_calc(PIDVexHandleTypedef *PIDController){
 PIDVexHandleTypedef *PID_Devices_Handles_Container[4] = {&PID0, &PID1, &PID2, &PID3};
 
 int main(){
+    //test bench
     for(int i =0; i <4; i++){
         PID_CON_Init(PID_Devices_Handles_Container[i],i);
     }
