@@ -10,7 +10,7 @@
 #define Default_KD 0.01;
 
 typedef struct PID_Vector{
-    int16_t parameters[3];
+    float parameters[3];
     //[0]->P, [1]->I, [2]->D
     int16_t history_errs[GblIttLength]; 
     uint16_t pointer;
@@ -20,9 +20,9 @@ typedef struct PID_Vector{
 }PIDVexHandleTypedef;
 
 typedef struct Velocies_Target_Vector{
-    int16_t velocies_of_whls[4];
-    int16_t velocies_of_targs[4];
-    int16_t velocies_of_deltas[4];
+    float velocies_of_whls[4];
+    float velocies_of_targs[4];
+    float velocies_of_deltas[4];
 }VelcVexTypedef;
 
 typedef struct Differential_Control_Interface{
@@ -125,26 +125,27 @@ void error_update(PIDVexHandleTypedef *TargPIDController){
         TargPIDController->pointer = 0;
     }else{
         TargPIDController->pointer ++;
-        ;
     }
     //calculate velocities then transmit to PID Controller history
-    Wheels_Velocities.velocies_of_deltas[Data_Index] = 
-        Wheels_Velocities.velocies_of_targs - Wheels_Velocities.velocies_of_whls;
+    float delta = Wheels_Velocities.velocies_of_targs[Data_Index] - Wheels_Velocities.velocies_of_whls[Data_Index]; 
+    Wheels_Velocities.velocies_of_deltas[Data_Index] = delta;
+        
     //to access PID's velocity: Wheels_Velocities.velocies_of_whls[Data_Index];
-    TargPIDController->history_errs[TargPIDController->pointer];
+    TargPIDController->history_errs[TargPIDController->pointer] = delta;
 }
 
 float error_calc(PIDVexHandleTypedef *PIDController);
 
 float error_calc(PIDVexHandleTypedef *PIDController){
     float result = 0;
-    int16_t itteration_val = 0;
+    float itteration_val = 0;
     for(int i =0; i < PIDController->this_container_len; i++){
         itteration_val += PIDController->history_errs[i];
     }
-    result = PIDController->parameters[0] * PIDController->history_errs[PIDController->pointer]
-            +PIDController->parameters[1] * itteration_val;
-            +PIDController->parameters[2] * SysDt;
+    float this_error = PIDController->history_errs[PIDController->pointer];
+    result = PIDController->parameters[0] * this_error
+            +PIDController->parameters[1] * itteration_val
+            +PIDController->parameters[2] * this_error/SysDt;
 
     return result;
 }
@@ -164,11 +165,12 @@ int main(){
     DCI_Update_Calc(&DCIController);
     DCIC_To_VLC_Update(&DCIController, &Wheels_Velocities);
 
-    for(int i =0; i <4; i++){
-        error_calc(PID_Devices_Handles_Container[i]);
-        error_update(PID_Devices_Handles_Container[i]);
+    for(int j =0; j< 10; j++){
+        for(int i =0; i <4; i++){
+            error_calc(PID_Devices_Handles_Container[i]);
+            error_update(PID_Devices_Handles_Container[i]);
+        }
     }
-
     return 0;
 }
  
