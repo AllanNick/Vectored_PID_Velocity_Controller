@@ -28,6 +28,7 @@ typedef struct Velocies_Target_Vector{
 typedef struct Differential_Control_Interface{
     int16_t Differential_Layer[4];
     int16_t Velocity_Restriction[4];
+    int16_t Targ_Velocity_Layer[4];
     int16_t Velocity_Targ;
     int16_t Rotation_Targ;
 }DCIHandleTypedef;
@@ -67,13 +68,20 @@ void VLC_CON_Init(void){
 
 void DCI_CON_Init(DCIHandleTypedef *DCIC);
 
-void DCI_COM_Init(DCIHandleTypedef *DCIC){
+void DCI_CON_Init(DCIHandleTypedef *DCIC){
     for(int i = 0; i<4 ;i++){
         DCIC->Differential_Layer[i] = 0;
+        DCIC->Targ_Velocity_Layer[i] =0;
         DCIC->Velocity_Restriction[i] = 100;
     }
     DCIC->Rotation_Targ = 0;
     DCIC->Velocity_Targ = 0;
+}
+
+void DCIC_To_VLC_Update(DCIHandleTypedef *DCIC, VelcVexTypedef *VLCC){
+    for(int i =0; i<4; i++){
+        VLCC->velocies_of_targs[i] = DCIC->Targ_Velocity_Layer[i];
+    }
 }
 
 void DCI_Targ_Modify_Overwrite(DCIHandleTypedef *DCIC, int16_t Targ_V, int16_t Targ_R);
@@ -101,7 +109,7 @@ void DCI_Update_Calc(DCIHandleTypedef *DCIC){
         }
     }
     for(int i =0;i <4; i++){
-        ;
+        DCIC->Targ_Velocity_Layer[i] = DCIC->Velocity_Targ;
     }
 }
 
@@ -142,8 +150,25 @@ float error_calc(PIDVexHandleTypedef *PIDController){
 }
 //global functions declearations:
 
+//PIDVexHandleTypedef *PIDS = {&PID0, &PID1, &PID2, &PID3};
+PIDVexHandleTypedef *PID_Devices_Handles_Container[4] = {&PID0, &PID1, &PID2, &PID3};
+
 int main(){
-    PID_CON_Init(&PID0,0);
+    for(int i =0; i <4; i++){
+        PID_CON_Init(PID_Devices_Handles_Container[i],i);
+    }
+    VLC_CON_Init();
+    DCI_CON_Init(&DCIController);
+
+    DCI_Targ_Modify_Offset(&DCIController, 20, 0);
+    DCI_Update_Calc(&DCIController);
+    DCIC_To_VLC_Update(&DCIController, &Wheels_Velocities);
+
+    for(int i =0; i <4; i++){
+        error_calc(PID_Devices_Handles_Container[i]);
+        error_update(PID_Devices_Handles_Container[i]);
+    }
+
     return 0;
 }
  
