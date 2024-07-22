@@ -1,7 +1,6 @@
 #include "stdint.h"
 #include "stdlib.h"
 
-
 #define GblIttLength 20 //Global Interger Length
 #define PI 3.1415926535
 #define SysDt 20;
@@ -45,14 +44,6 @@ VelcVexTypedef Wheels_Velocities;
 DCIHandleTypedef DCIController;
 
 void PID_CON_Init(PIDVexHandleTypedef *PIDController, uint16_t Access_Tag_ID);
-void VLC_CON_Init(void);
-void DCI_CON_Init(DCIHandleTypedef *DCIC);
-void DCI_Targ_Modify_Overwrite(DCIHandleTypedef *DCIC, int16_t Targ_V, int16_t Targ_R);
-void DCI_Targ_Modify_Offset(DCIHandleTypedef *DCIC, int16_t Targ_V, int16_t Targ_R);
-void DCI_Update_Calc(DCIHandleTypedef *DCIC);
-void error_update(PIDVexHandleTypedef *TargPIDController);
-float error_calc(PIDVexHandleTypedef *PIDController);
-
 
 void PID_CON_Init(PIDVexHandleTypedef *PIDController, uint16_t Access_Tag_ID){
     PIDController->parameters[0] = Default_KP;
@@ -65,6 +56,8 @@ void PID_CON_Init(PIDVexHandleTypedef *PIDController, uint16_t Access_Tag_ID){
     PIDController->Access_tag_ID = Access_Tag_ID;
 }
 
+void VLC_CON_Init(void);
+
 void VLC_CON_Init(void){
     for(int i =0; i <4; i++){
         Wheels_Velocities.velocies_of_deltas[i] = 0;
@@ -72,6 +65,8 @@ void VLC_CON_Init(void){
         Wheels_Velocities.velocies_of_whls[i] = 0;
     }
 }
+
+void DCI_CON_Init(DCIHandleTypedef *DCIC);
 
 void DCI_CON_Init(DCIHandleTypedef *DCIC){
     for(int i = 0; i<4 ;i++){
@@ -88,6 +83,10 @@ void DCIC_To_VLC_Update(DCIHandleTypedef *DCIC, VelcVexTypedef *VLCC){
         VLCC->velocies_of_targs[i] = DCIC->Targ_Velocity_Layer[i];
     }
 }
+
+void DCI_Targ_Modify_Overwrite(DCIHandleTypedef *DCIC, int16_t Targ_V, int16_t Targ_R);
+void DCI_Targ_Modify_Offset(DCIHandleTypedef *DCIC, int16_t Targ_V, int16_t Targ_R);
+void DCI_Update_Calc(DCIHandleTypedef *DCIC);
 
 void DCI_Targ_Modify_Overwrite(DCIHandleTypedef *DCIC, int16_t Targ_V, int16_t Targ_R){
     DCIC->Velocity_Targ = Targ_V;
@@ -118,6 +117,7 @@ void DCI_Update_Calc(DCIHandleTypedef *DCIC){
 void Get_velocties(void);
 void Delta_velocties(void);
 */
+void error_update(PIDVexHandleTypedef *TargPIDController);
 
 void error_update(PIDVexHandleTypedef *TargPIDController){
     uint16_t Data_Index = TargPIDController->Access_tag_ID;
@@ -133,6 +133,8 @@ void error_update(PIDVexHandleTypedef *TargPIDController){
     //to access PID's velocity: Wheels_Velocities.velocies_of_whls[Data_Index];
     TargPIDController->history_errs[TargPIDController->pointer] = delta;
 }
+
+float error_calc(PIDVexHandleTypedef *PIDController);
 
 float error_calc(PIDVexHandleTypedef *PIDController){
     float result = 0;

@@ -52,6 +52,7 @@ build cmake_object_order_depends_target_a: phony || CMakeFiles/a.dir
 build CMakeFiles/a.dir/Src/main.c.obj: C_COMPILER__a_unscanned_Debug D$:/Programs/C_works/Vectored_PID_Velocity_Controler/Vectored_PID_Velocity_Controller/Src/main.c || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\Src\main.c.obj.d
   FLAGS = -g
+  INCLUDES = -ID:/Programs/C_works/Vectored_PID_Velocity_Controler/Vectored_PID_Velocity_Controller/Inc
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\Src
 
