@@ -298,6 +298,9 @@ void PID_CON_Update(void){
       __HAL_TIM_SetCompare(&htim2, channel_id, calc_res);
     }
     Latest_ERR[0] = SET;
+    //Known issue: ansync update in channels except channel1
+    //which makes only channel 1 functioning normally
+    //solution: individualize Updators
   }
 }
 
