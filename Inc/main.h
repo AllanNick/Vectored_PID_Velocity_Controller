@@ -45,8 +45,10 @@ DCIHandleTypedef DCIController;
 void PID_CON_Init(PIDVexHandleTypedef *PIDController, uint16_t Access_Tag_ID);
 void VLC_CON_Init(void);
 void DCI_CON_Init(DCIHandleTypedef *DCIC);
+
 void DCI_Targ_Modify_Overwrite(DCIHandleTypedef *DCIC, int16_t Targ_V, int16_t Targ_R);
 void DCI_Targ_Modify_Offset(DCIHandleTypedef *DCIC, int16_t Targ_V, int16_t Targ_R);
 void DCI_Update_Calc(DCIHandleTypedef *DCIC);
+
 void error_update(PIDVexHandleTypedef *TargPIDController);
 float error_calc(PIDVexHandleTypedef *PIDController);
