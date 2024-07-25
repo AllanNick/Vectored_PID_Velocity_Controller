@@ -1,123 +1,115 @@
 #include "stdint.h"
-#include "stdlib.h"
-#include "main.h"
 
-void PID_CON_Init(PIDVexHandleTypedef *PIDController, uint16_t Access_Tag_ID){
-    PIDController->parameters[0] = Default_KP;
-    PIDController->parameters[1] = Default_KI;
-    PIDController->parameters[2] = Default_KD;
-    for(int i =0; i < GblIttLength; i++){
-        PIDController->history_errs[i] = 0;
+#define ITTLEN 20
+
+#define DefaultKP 1
+#define DefaultKI 0.2
+#define DefaultKD 0.1
+
+#define DefatltRefDt 2
+
+typedef struct PIDCON{
+    /*Parameters*/
+    float Parameters[3];
+    /*Data*/
+    float HistoryErrs[ITTLEN];
+    /*History Data Pointer*/
+    uint16_t HDPTR;
+    
+    float *Error;
+    int16_t VelocityWheel;
+    int16_t VelocityTarg;
+    float Increment;
+
+    float RefDt;
+
+    int16_t PIDC_INIT_STAT;
+    /*
+    4 status of DIRIN:
+    0x00, 0x01, 0x02, 0x03
+    00  , 01  , 10  , 11
+    free fwrd  back  break
+    */
+    uint8_t DIRIN;
+
+}PIDVexHandleTypedef;
+
+
+void PID_CON_INIT(PIDVexHandleTypedef *PIDC);
+void PID_CON_INIT(PIDVexHandleTypedef *PIDC){
+    PIDC->Parameters[0] = DefaultKP;
+    PIDC->Parameters[1] = DefaultKI;
+    PIDC->Parameters[2] = DefaultKD;
+    
+    for(int16_t i =0; i<20; i++){
+        PIDC->HistoryErrs[i] = 0;
     }
-    PIDController->this_container_len = GblIttLength;
-    PIDController->Access_tag_ID = Access_Tag_ID;
+    PIDC->HDPTR =0;
+    PIDC->Error = &PIDC->HistoryErrs[PIDC->HDPTR];
+    PIDC->VelocityTarg = 0;
+    PIDC->VelocityWheel = 0;
+    PIDC->Increment =0;
+    PIDC->PIDC_INIT_STAT = 1;
+
+    PIDC->RefDt = DefatltRefDt;
+    PIDC->DIRIN = 0x00;
 }
 
-void VLC_CON_Init(void){
-    for(int i =0; i <4; i++){
-        Wheels_Velocities.velocies_of_deltas[i] = 0;
-        Wheels_Velocities.velocies_of_targs[i] = 0;
-        Wheels_Velocities.velocies_of_whls[i] = 0;
-    }
+void PID_CON_ModifyTarg(PIDVexHandleTypedef *PIDC, uint16_t TargVelocity);
+void PID_CON_ModifyTarg(PIDVexHandleTypedef *PIDC, uint16_t TargVelocity){
+    PIDC->VelocityTarg = TargVelocity;
 }
 
-void DCI_CON_Init(DCIHandleTypedef *DCIC){
-    for(int i = 0; i<4 ;i++){
-        DCIC->Differential_Layer[i] = 0;
-        DCIC->Targ_Velocity_Layer[i] =0;
-        DCIC->Velocity_Restriction[i] = 100;
-    }
-    DCIC->Rotation_Targ = 0;
-    DCIC->Velocity_Targ = 0;
-}
 
-void DCIC_To_VLC_Update(DCIHandleTypedef *DCIC, VelcVexTypedef *VLCC){
-    for(int i =0; i<4; i++){
-        VLCC->velocies_of_targs[i] = DCIC->Targ_Velocity_Layer[i];
-    }
-}
-
-void DCI_Targ_Modify_Overwrite(DCIHandleTypedef *DCIC, int16_t Targ_V, int16_t Targ_R){
-    DCIC->Velocity_Targ = Targ_V;
-    DCIC->Rotation_Targ = Targ_R;
-}
-
-void DCI_Targ_Modify_Offset(DCIHandleTypedef *DCIC, int16_t Targ_V, int16_t Targ_R){
-    DCIC->Velocity_Targ = DCIC->Velocity_Targ + Targ_V;
-    DCIC->Rotation_Targ = DCIC->Rotation_Targ + Targ_R;
-}
-
-void DCI_Update_Calc(DCIHandleTypedef *DCIC){
-    //DIC LOCIC PART
-    //PREVILIAGE OF 'R' HIGHER THAN 'V'
-    if(abs(DCIC->Velocity_Targ)>100){
-        if(DCIC->Velocity_Targ>100){
-            DCIC->Velocity_Targ = 100;
-        }else{
-            DCIC->Velocity_Targ = -100;
-        }
-    }
-    for(int i =0;i <4; i++){
-        DCIC->Targ_Velocity_Layer[i] = DCIC->Velocity_Targ;
-    }
-}
-
-/*
-void Get_velocties(void);
-void Delta_velocties(void);
-*/
-
-void error_update(PIDVexHandleTypedef *TargPIDController){
-    uint16_t Data_Index = TargPIDController->Access_tag_ID;
-    if(TargPIDController->pointer == GblIttLength-1){
-        TargPIDController->pointer = 0;
+void PID_CON_Update(PIDVexHandleTypedef *PIDC, uint16_t Velocity);
+void PID_CON_Update(PIDVexHandleTypedef *PIDC, uint16_t Velocity){
+    if(PIDC->HDPTR >= ITTLEN && PIDC->PIDC_INIT_STAT == 1){
+        PIDC->HDPTR = 0;
     }else{
-        TargPIDController->pointer ++;
+        PIDC->HDPTR ++;
     }
-    //calculate velocities then transmit to PID Controller history
-    float delta = Wheels_Velocities.velocies_of_targs[Data_Index] - Wheels_Velocities.velocies_of_whls[Data_Index]; 
-    Wheels_Velocities.velocies_of_deltas[Data_Index] = delta;
-        
-    //to access PID's velocity: Wheels_Velocities.velocies_of_whls[Data_Index];
-    TargPIDController->history_errs[TargPIDController->pointer] = delta;
+    PIDC->Error = &PIDC->HistoryErrs[PIDC->HDPTR];
+    *(PIDC->Error) = PIDC->VelocityTarg - Velocity;
+
+    float Integral = 0;
+    for(uint16_t i =0; i< ITTLEN; i++){
+        Integral = Integral + PIDC->HistoryErrs[i]; 
+    }
+
+    PIDC->Increment = PIDC->Parameters[0] * *(PIDC->Error)
+                    + PIDC->Parameters[1] * Integral
+                    + PIDC->Parameters[2] * (*(PIDC->Error)/PIDC->RefDt);
+
+    /*Reserved Function*/
+    if(PIDC->VelocityTarg >> 16 | 1 == 1){
+        PIDC->DIRIN = 0x01;
+    }else{
+        PIDC->DIRIN = 0X02;
+    }
 }
 
-float error_calc(PIDVexHandleTypedef *PIDController){
-    float result = 0;
-    float itteration_val = 0;
-    for(int i =0; i < PIDController->this_container_len; i++){
-        itteration_val += PIDController->history_errs[i];
-    }
-    float this_error = PIDController->history_errs[PIDController->pointer];
-    result = PIDController->parameters[0] * this_error
-            +PIDController->parameters[1] * itteration_val
-            +PIDController->parameters[2] * this_error/SysDt;
+PIDVexHandleTypedef PIDC0;
+PIDVexHandleTypedef PIDC1;
 
-    return result;
-}
-//global functions declearations:
+PIDVexHandleTypedef *PIDControllerHandlers[2] = {&PIDC0, &PIDC1};
 
-//PIDVexHandleTypedef *PIDS = {&PID0, &PID1, &PID2, &PID3};
-PIDVexHandleTypedef *PID_Devices_Handles_Container[4] = {&PID0, &PID1, &PID2, &PID3};
+/*Differential Control Interface*/
+typedef struct DCICON{
+    float TargetVelocoty;
+    float TargetAngle;
+
+    float SolvedAbsolutVector[4];
+    float SolvedDifferentialVector[4];
+}DCIVexHandleTypedef;
 
 int main(){
-    //test bench
-    for(int i =0; i <4; i++){
-        PID_CON_Init(PID_Devices_Handles_Container[i],i);
-    }
-    VLC_CON_Init();
-    DCI_CON_Init(&DCIController);
+    PID_CON_INIT(PIDControllerHandlers[0]);
+    PID_CON_INIT(PIDControllerHandlers[1]);
 
-    DCI_Targ_Modify_Offset(&DCIController, 20, 0);
-    DCI_Update_Calc(&DCIController);
-    DCIC_To_VLC_Update(&DCIController, &Wheels_Velocities);
+    PID_CON_ModifyTarg(PIDControllerHandlers[0], 20);
+    PID_CON_ModifyTarg(PIDControllerHandlers[1], 20);
 
-    for(int j =0; j< 10; j++){
-        for(int i =0; i <4; i++){
-            error_calc(PID_Devices_Handles_Container[i]);
-            error_update(PID_Devices_Handles_Container[i]);
-        }
-    }
+    PID_CON_Update(PIDControllerHandlers[0], 0);
+    PID_CON_Update(PIDControllerHandlers[1], 40);
     return 0;
 }
- 
